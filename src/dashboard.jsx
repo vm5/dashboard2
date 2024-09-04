@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from './firebase';
-import { sessionDataStudent } from './data'; // Sample data for students
 
 const Container = styled.div`
   display: flex;
@@ -205,6 +204,7 @@ const Dashboard = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [studentData, setStudentData] = useState([]);
 
   useEffect(() => {
     // Set current date when component mounts
@@ -217,14 +217,31 @@ const Dashboard = () => {
         setIsAuthenticated(true);
         setUserName(user.email.split('@')[0]); // Simplified username
         setEmail(user.email);
+
+        // Fetch student data for the authenticated user
+        fetchStudentData(user.email);
       } else {
         setIsAuthenticated(false);
         setUserName('');
         setEmail('');
+        setStudentData([]); // Clear student data on logout
       }
     });
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, []);
+
+  const fetchStudentData = async (userEmail) => {
+    try {
+      const response = await fetch(`http://localhost:3000/student-status?email=${userEmail}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch student data');
+      }
+      const data = await response.json();
+      setStudentData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleLogin = async () => {
     setLoadingMessage('Logging in...');
@@ -267,9 +284,7 @@ const Dashboard = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button
-            onClick={handleLogin}
-          >
+          <button onClick={handleLogin}>
             Login
           </button>
           {loadingMessage && <LoadingMessage>{loadingMessage}</LoadingMessage>}
@@ -277,9 +292,6 @@ const Dashboard = () => {
       </LoginContainer>
     );
   }
-
-  // Filter data for the logged-in user
-  const userData = sessionDataStudent.filter(item => item.email === email);
 
   return (
     <Container>
@@ -301,32 +313,26 @@ const Dashboard = () => {
           </DateSelector>
         </Header>
 
-        {/* Update the Table to display Companies Applied For and Status */}
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeader>Sl no</TableHeader>
-              <TableHeader>Companies you've enquired for</TableHeader>
+              <TableHeader>Company Applied For</TableHeader>
               <TableHeader>Status</TableHeader>
             </TableRow>
           </TableHead>
           <tbody>
-            {userData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan="3">No data available</TableCell>
+            {studentData.length > 0 ? studentData.map((data, index) => (
+              <TableRow key={index}>
+                <TableCell>{data.company}</TableCell>
+                <TableCell>{data.status}</TableCell>
               </TableRow>
-            ) : (
-              userData.map((item, index) => (
-                <TableRow key={item.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{item.company}</TableCell>
-                  <TableCell>{item.status}</TableCell>
-                </TableRow>
-              ))
+            )) : (
+              <TableRow>
+                <TableCell colSpan="2">No data available</TableCell>
+              </TableRow>
             )}
           </tbody>
         </Table>
-        {loadingMessage && <LoadingMessage>{loadingMessage}</LoadingMessage>}
       </MainContent>
     </Container>
   );
