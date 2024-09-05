@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from './firebase';
+import { sessionDataStudent } from './data';
 
 const Container = styled.div`
   display: flex;
@@ -204,44 +205,24 @@ const Dashboard = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [studentData, setStudentData] = useState([]);
 
   useEffect(() => {
-    // Set current date when component mounts
     const today = new Date().toISOString().split('T')[0];
     setSelectedDate(today);
 
-    // Check if user is already authenticated
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsAuthenticated(true);
-        setUserName(user.email.split('@')[0]); // Simplified username
+        setUserName(user.email.split('@')[0]);
         setEmail(user.email);
-
-        // Fetch student data for the authenticated user
-        fetchStudentData(user.email);
       } else {
         setIsAuthenticated(false);
         setUserName('');
         setEmail('');
-        setStudentData([]); // Clear student data on logout
       }
     });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
-
-  const fetchStudentData = async (userEmail) => {
-    try {
-      const response = await fetch(`http://localhost:3000/student-status?email=${userEmail}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch student data');
-      }
-      const data = await response.json();
-      setStudentData(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const handleLogin = async () => {
     setLoadingMessage('Logging in...');
@@ -284,14 +265,16 @@ const Dashboard = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button onClick={handleLogin}>
-            Login
-          </button>
+          <button onClick={handleLogin}>Login</button>
           {loadingMessage && <LoadingMessage>{loadingMessage}</LoadingMessage>}
         </LoginForm>
       </LoginContainer>
     );
   }
+
+  const filteredSessionData = sessionDataStudent.filter(
+    (data) => data.email === email
+  );
 
   return (
     <Container>
@@ -321,12 +304,14 @@ const Dashboard = () => {
             </TableRow>
           </TableHead>
           <tbody>
-            {studentData.length > 0 ? studentData.map((data, index) => (
-              <TableRow key={index}>
-                <TableCell>{data.company}</TableCell>
-                <TableCell>{data.status}</TableCell>
-              </TableRow>
-            )) : (
+            {filteredSessionData.length > 0 ? (
+              filteredSessionData.map((data, index) => (
+                <TableRow key={index}>
+                  <TableCell>{data.company}</TableCell>
+                  <TableCell>{data.status}</TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan="2">No data available</TableCell>
               </TableRow>
