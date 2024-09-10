@@ -270,7 +270,7 @@ const Dashboard = () => {
     return (
       <LoginContainer>
         <LoginForm>
-          <h1>Welcome to Heinweis's Student Dashboard! Please log in to access your request(s) status.</h1>
+          <h1>Welcome to Heinweis's Student Dashboard! Please log in to access the status of your request(s).</h1>
           <input
             type="email"
             placeholder="Email"
@@ -325,7 +325,7 @@ const Dashboard = () => {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={2}>It seems like you haven't enquired about any organization. If you have, your status will be visible to you soon.</TableCell>
+                <TableCell colSpan={2}>It seems like you haven't enquired about any organization. If you have done the same a while ago, your status will be visible to you soon.</TableCell>
               </TableRow>
             )}
           </tbody>
