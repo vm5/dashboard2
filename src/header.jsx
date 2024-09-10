@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import React from 'react';
+import { AppBar, Toolbar, Typography} from '@mui/material';
 import { styled, keyframes } from '@mui/material/styles';
 
 // Animation for fading in elements
@@ -89,8 +89,8 @@ const Header = () => {
       <Toolbar>
         <HeaderContent>
           <SlidingHeading variant="h1">
-            nucleus<span>FUSION</span>
-            <p>Navigating Success!</p>
+            Hein<span>weis</span>
+            <p>Your career, our connection!</p>
           </SlidingHeading>
         </HeaderContent>
       </Toolbar>
