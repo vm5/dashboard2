@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from './firebase';
-import { sessionDataStudent } from './data';
+import { auth, db } from './firebase'; // Ensure Firebase Firestore is properly configured
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const Container = styled.div`
   display: flex;
@@ -205,6 +205,7 @@ const Dashboard = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [sessionData, setSessionData] = useState([]);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -215,6 +216,7 @@ const Dashboard = () => {
         setIsAuthenticated(true);
         setUserName(user.email.split('@')[0]);
         setEmail(user.email);
+        fetchSessionData(user.email);
       } else {
         setIsAuthenticated(false);
         setUserName('');
@@ -236,6 +238,22 @@ const Dashboard = () => {
     }
   };
 
+  const fetchSessionData = async (email) => {
+    try {
+      const q = query(collection(db, 'applications'), where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({
+        company: doc.data().Company,  // Updated to match Firestore field
+        status: doc.data().Status,     // Updated to match Firestore field
+        id: doc.data().id
+      }));
+      setSessionData(data);
+    } catch (error) {
+      console.error('Error fetching session data:', error);
+      alert('Failed to fetch session data.');
+    }
+  };
+
   const handleLogout = async () => {
     setLoadingMessage('Signing out...');
 
@@ -252,7 +270,7 @@ const Dashboard = () => {
     return (
       <LoginContainer>
         <LoginForm>
-          <h1>Welcome to nucleusFUSION's Student Dashboard! Please log in to access your request(s) status.</h1>
+          <h1>Welcome to Heinweis's Student Dashboard! Please log in to access your request(s) status.</h1>
           <input
             type="email"
             placeholder="Email"
@@ -272,16 +290,12 @@ const Dashboard = () => {
     );
   }
 
-  const filteredSessionData = sessionDataStudent.filter(
-    (data) => data.email === email
-  );
-
   return (
     <Container>
       <Sidebar>
         <div>
           <SidebarItem active>Student Dashboard</SidebarItem>
-        </div>
+          </div>
         <SidebarItem>{userName}<br />Student</SidebarItem>
         <ExitButton onClick={handleLogout}>Exit</ExitButton>
       </Sidebar>
@@ -299,21 +313,19 @@ const Dashboard = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeader>Company Applied For</TableHeader>
+              <TableHeader>Organization Enquired For</TableHeader>
               <TableHeader>Status</TableHeader>
             </TableRow>
           </TableHead>
           <tbody>
-            {filteredSessionData.length > 0 ? (
-              filteredSessionData.map((data, index) => (
-                <TableRow key={index}>
-                  <TableCell>{data.company}</TableCell>
-                  <TableCell>{data.status}</TableCell>
-                </TableRow>
-              ))
-            ) : (
+            {sessionData.length > 0 ? sessionData.map((data, index) => (
+              <TableRow key={index}>
+                <TableCell>{data.company}</TableCell> {/* Company */}
+                <TableCell>{data.status}</TableCell> {/* Status */}
+              </TableRow>
+            )) : (
               <TableRow>
-                <TableCell colSpan="2">No data available</TableCell>
+                <TableCell colSpan={2}>It seems like you haven't enquired about any organization. If you have, your status will be visible to you soon.</TableCell>
               </TableRow>
             )}
           </tbody>
